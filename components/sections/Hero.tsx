@@ -5,6 +5,9 @@ import Image from 'next/image'
 
 export default function Hero() {
   useEffect(() => {
+    // Skip particles on mobile — saves CPU significantly
+    if (window.innerWidth < 768) return
+
     const canvas = document.getElementById('particleCanvas') as HTMLCanvasElement | null
     if (!canvas) return
     const ctx = canvas.getContext('2d')!
@@ -13,8 +16,7 @@ export default function Hero() {
     resize()
     window.addEventListener('resize', resize)
 
-    const count = window.innerWidth < 768 ? 40 : 80
-    const particles = Array.from({ length: count }, () => ({
+    const particles = Array.from({ length: 60 }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
       r: Math.random() * 2.5 + 0.5,
@@ -32,9 +34,13 @@ export default function Hero() {
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
         ctx.fillStyle = `rgba(${p.color},${p.opacity})`
         ctx.fill()
-        particles.forEach((p2, j) => {
-          if (i === j) return
-          const dist = Math.hypot(p.x - p2.x, p.y - p2.y)
+        // Only check nearby particles (skip O(n²) on full list)
+        for (let j = i + 1; j < particles.length; j++) {
+          const p2 = particles[j]
+          const dx = p.x - p2.x
+          const dy = p.y - p2.y
+          if (Math.abs(dx) > 100 || Math.abs(dy) > 100) continue
+          const dist = Math.hypot(dx, dy)
           if (dist < 100) {
             ctx.beginPath()
             ctx.moveTo(p.x, p.y)
@@ -43,7 +49,7 @@ export default function Hero() {
             ctx.lineWidth = 0.5
             ctx.stroke()
           }
-        })
+        }
         p.x += p.dx; p.y += p.dy
         if (p.x < 0 || p.x > canvas.width) p.dx *= -1
         if (p.y < 0 || p.y > canvas.height) p.dy *= -1

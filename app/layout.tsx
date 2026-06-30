@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Poppins, Inter } from 'next/font/google'
+import Script from 'next/script'
 import './globals.css'
 
 const poppins = Poppins({
@@ -67,12 +68,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${poppins.variable} ${inter.variable}`}>
       <head>
         <link rel="icon" href="/logo.jpeg" />
+        <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossOrigin="anonymous" />
-        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js" />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Script
+          src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"
+          strategy="lazyOnload"
+        />
+      </body>
     </html>
   )
 }
