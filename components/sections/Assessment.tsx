@@ -3,414 +3,441 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { buildQuestionSet, SUBJECT_LABELS } from '@/data/assessmentQuestions'
 
-interface Question {
-  q: string
-  opts: string[]
-  ans: number
-  exp: string
-  subject: string
-}
+interface Question { q: string; opts: string[]; ans: number; exp: string; subject: string }
+interface UserInfo { name: string; mobile: string; email: string; city: string; qualification: string; targetExam: string; challenge: string }
+interface SubjectData { correct: number; wrong: number; skipped: number; max: number; score: number; pct: number }
+interface Results { score: number; maxScore: number; pct: number; readiness: string; readinessColor: string; subjectScores: Record<string, SubjectData>; correct: number; wrong: number; skipped: number }
 
-interface UserInfo {
-  name: string
-  email: string
-  phone: string
-  targetExam: string
-}
-
-interface Answer {
-  selected: number | null
-  timeSpent: number
-}
-
-interface SubjectResult {
-  correct: number
-  wrong: number
-  total: number
-}
-
-type SubjectResults = Record<string, SubjectResult>
-
-const EXAMS = ['Banking', 'SSC', 'Defence', 'MBA', 'Law', 'MCA', 'CUET', 'IT']
 const TOTAL_TIME = 30
+const COURSE_MAP: Record<string, string> = {
+  Banking: 'IBPS / SBI Bank PO & Clerk', SSC: 'SSC CGL / CHSL / MTS',
+  Defence: 'NDA / CDS / AFCAT', MBA: 'MBA CET / CAT / MAT',
+  Law: 'CLAT / AILET / MH CET Law', MCA: 'MCA CET / NIMCET',
+  CUET: 'CUET UG / PG', IT: 'MCA Entrance',
+}
+const STUDY_PLANS: Record<string, string[]> = {
+  quant: ['Practice 30 questions daily', 'Focus on Percentages, Profit/Loss, Time-Speed-Distance', 'Use shortcut formulas'],
+  reasoning: ['Solve 20 puzzles daily', 'Focus on Coding-Decoding, Blood Relations, Series', 'Practice Mirror Images weekly'],
+  english: ['Read newspaper editorials daily', 'Learn 10 new vocabulary words daily', 'Practice grammar exercises'],
+  gk: ['Read daily current affairs (30 min)', 'Revise last 6 months events weekly', 'Focus on national/international affairs'],
+  banking: ['Study banking awareness daily', 'Practice previous year banking questions', 'Stay updated with RBI/SEBI circulars'],
+  ssc: ['Revise Indian Polity (Laxmikant)', 'Focus on History and Geography', 'Practice previous year SSC papers'],
+  defence: ['Study Indian Defence history', 'Follow current military affairs', 'Practice from Pathfinder CDS/NDA book'],
+  mba: ['Practice DI and LR sets', 'Study business news and case studies', 'Practice Verbal Ability daily'],
+  law: ['Study Indian Constitution thoroughly', 'Practice legal aptitude from previous CLAT papers', 'Read landmark case judgments'],
+  mca: ['Practice C/C++ programming basics', 'Revise data structures and algorithms', 'Solve previous MCA entrance papers'],
+  cuet: ['Focus on domain subject mastery', 'Practice NCERT 11th-12th thoroughly', 'Take CUET mock tests weekly'],
+}
+
+function fireConfetti(canvas: HTMLCanvasElement | null) {
+  if (!canvas) return
+  const ctx = canvas.getContext('2d')!
+  canvas.width = canvas.offsetWidth
+  canvas.height = canvas.offsetHeight
+  canvas.style.opacity = '1'
+  const colors = ['#0B3D91', '#1FA64A', '#FFD700', '#FF6B35', '#C0392B', '#9B59B6']
+  const particles = Array.from({ length: 120 }, () => ({
+    x: Math.random() * canvas.width, y: -20 - Math.random() * 200,
+    w: 8 + Math.random() * 8, h: 4 + Math.random() * 4,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    speed: 3 + Math.random() * 4, angle: Math.random() * Math.PI * 2,
+    spin: (Math.random() - 0.5) * 0.2, drift: (Math.random() - 0.5) * 2,
+  }))
+  let frame: number
+  const draw = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    let alive = false
+    particles.forEach(p => {
+      if (p.y < canvas.height + 20) alive = true
+      p.y += p.speed; p.x += p.drift; p.angle += p.spin
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle)
+      ctx.fillStyle = p.color; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h)
+      ctx.restore()
+    })
+    if (alive) frame = requestAnimationFrame(draw)
+    else { ctx.clearRect(0, 0, canvas.width, canvas.height); canvas.style.opacity = '0' }
+  }
+  draw()
+  setTimeout(() => { cancelAnimationFrame(frame); ctx.clearRect(0, 0, canvas.width, canvas.height); canvas.style.opacity = '0' }, 4000)
+}
 
 export default function Assessment() {
   const [step, setStep] = useState<1 | 2 | 3>(1)
-  const [userInfo, setUserInfo] = useState<UserInfo>({ name: '', email: '', phone: '', targetExam: 'Banking' })
+  const [userInfo, setUserInfo] = useState<UserInfo>({ name: '', mobile: '', email: '', city: '', qualification: '', targetExam: '', challenge: '' })
   const [questions, setQuestions] = useState<Question[]>([])
   const [currentQ, setCurrentQ] = useState(0)
-  const [answers, setAnswers] = useState<Answer[]>([])
-  const [negativeMarking, setNegativeMarking] = useState(true)
+  const [answers, setAnswers] = useState<(number | null)[]>(new Array(15).fill(null))
+  const [negativeMarking, setNegativeMarking] = useState(false)
   const [timeLeft, setTimeLeft] = useState(TOTAL_TIME)
-  const [results, setResults] = useState<{ score: number; maxScore: number; subjectResults: SubjectResults; studyPlan: string[] } | null>(null)
-  const [toast, setToast] = useState('')
-  const [selectedOpt, setSelectedOpt] = useState<number | null>(null)
+  const [results, setResults] = useState<Results | null>(null)
+  const [toast, setToast] = useState({ msg: '', type: '', show: false })
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const confettiRef = useRef<HTMLCanvasElement | null>(null)
-  const startTimeRef = useRef<number>(Date.now())
 
-  const showToast = (msg: string) => {
-    setToast(msg)
-    setTimeout(() => setToast(''), 3000)
+  const showToast = (msg: string, type = '') => {
+    setToast({ msg, type, show: true })
+    setTimeout(() => setToast(t => ({ ...t, show: false })), 3500)
   }
 
   const stopTimer = useCallback(() => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current)
-      timerRef.current = null
-    }
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
   }, [])
 
-  const moveToNext = useCallback((answersArr: Answer[]) => {
-    setCurrentQ(prev => {
-      const next = prev + 1
-      if (next >= questions.length) {
-        // Calculate results
-        stopTimer()
-        let score = 0
-        const subjectResults: SubjectResults = {}
-        questions.forEach((q, i) => {
-          const sub = q.subject
-          if (!subjectResults[sub]) subjectResults[sub] = { correct: 0, wrong: 0, total: 0 }
-          subjectResults[sub].total++
-          const a = answersArr[i]
-          if (a && a.selected !== null) {
-            if (a.selected === q.ans) {
-              score += 2
-              subjectResults[sub].correct++
-            } else {
-              if (negativeMarking) score -= 0.5
-              subjectResults[sub].wrong++
-            }
-          }
-        })
-        const maxScore = questions.length * 2
-        const pct = (score / maxScore) * 100
-
-        const weakSubs = Object.entries(subjectResults)
-          .filter(([, v]) => v.correct / v.total < 0.5)
-          .map(([k]) => SUBJECT_LABELS[k] || k)
-
-        const studyPlan: string[] = []
-        if (pct >= 80) studyPlan.push('Excellent! Focus on speed & accuracy in mock tests.')
-        else if (pct >= 60) studyPlan.push('Good foundation. Revise weak topics daily.')
-        else studyPlan.push('Needs improvement. Start with basics and practice daily.')
-        if (weakSubs.length) studyPlan.push(`Weak areas: ${weakSubs.join(', ')} — enroll in focused batches.`)
-        studyPlan.push('Solve 20+ questions daily from our test series.')
-        studyPlan.push('Attend free doubt-clearing sessions every Saturday.')
-
-        setResults({ score, maxScore, subjectResults, studyPlan })
-        setStep(3)
-
-        if (pct >= 70) launchConfetti()
-        return prev
-      }
-      setSelectedOpt(null)
-      setTimeLeft(TOTAL_TIME)
-      startTimeRef.current = Date.now()
-      return next
-    })
-  }, [questions, negativeMarking, stopTimer])
-
-  useEffect(() => {
-    if (step !== 2) return
+  const doSubmit = useCallback((qs: Question[], ans: (number | null)[]) => {
     stopTimer()
+    let totalScore = 0
+    const subjectData: Record<string, SubjectData> = {}
+    qs.forEach((q, i) => {
+      const subj = q.subject
+      if (!subjectData[subj]) subjectData[subj] = { correct: 0, wrong: 0, skipped: 0, max: 0, score: 0, pct: 0 }
+      subjectData[subj].max += 3
+      const a = ans[i]
+      if (a === null) { subjectData[subj].skipped++ }
+      else if (a === q.ans) { totalScore += 3; subjectData[subj].correct++ }
+      else { if (negativeMarking) totalScore -= 1; subjectData[subj].wrong++ }
+    })
+    Object.keys(subjectData).forEach(s => {
+      const d = subjectData[s]
+      let sc = d.correct * 3
+      if (negativeMarking) sc -= d.wrong
+      d.score = Math.max(0, sc)
+      d.pct = Math.round((d.score / d.max) * 100)
+    })
+    const maxScore = qs.length * 3
+    const score = Math.max(0, totalScore)
+    const pct = Math.round((score / maxScore) * 100)
+    let readiness = 'Beginner', readinessColor = '#0B3D91'
+    if (pct >= 67) { readiness = 'Advanced'; readinessColor = '#1FA64A' }
+    else if (pct >= 34) { readiness = 'Intermediate'; readinessColor = '#F7931E' }
+    const correct = qs.filter((q, i) => ans[i] === q.ans).length
+    const wrong = qs.filter((q, i) => ans[i] !== null && ans[i] !== q.ans).length
+    const skipped = qs.filter((_, i) => ans[i] === null).length
+    setResults({ score, maxScore, pct, readiness, readinessColor, subjectScores: subjectData, correct, wrong, skipped })
+    setStep(3)
+    setTimeout(() => fireConfetti(confettiRef.current), 200)
+  }, [negativeMarking, stopTimer])
+
+  const goToQuestion = useCallback((idx: number, qs?: Question[], ans?: (number | null)[]) => {
+    stopTimer()
+    setTimeLeft(TOTAL_TIME)
+    const start = Date.now()
     timerRef.current = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          setAnswers(old => {
-            const updated = [...old]
-            updated[currentQ] = { selected: null, timeSpent: TOTAL_TIME }
-            moveToNext(updated)
-            return updated
-          })
-          return TOTAL_TIME
-        }
-        return prev - 1
-      })
-    }, 1000)
-    return stopTimer
-  }, [step, currentQ, stopTimer, moveToNext])
+      const left = Math.max(0, TOTAL_TIME - (Date.now() - start) / 1000)
+      setTimeLeft(left)
+      if (left <= 0) {
+        stopTimer()
+        const curQs = qs || questions
+        const curAns = ans || answers
+        if (idx < curQs.length - 1) goToQuestion(idx + 1, curQs, curAns)
+        else doSubmit(curQs, curAns)
+      }
+    }, 100)
+  }, [stopTimer, questions, answers, doSubmit])
 
-  const launchConfetti = () => {
-    const canvas = confettiRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    canvas.width = window.innerWidth
-    canvas.height = window.innerHeight
-    canvas.style.display = 'block'
+  useEffect(() => () => stopTimer(), [stopTimer])
 
-    const pieces: { x: number; y: number; color: string; r: number; d: number; tilt: number; tiltAngle: number; tiltSpeed: number }[] = []
-    const colors = ['#0B3D91', '#1FA64A', '#FFD700', '#FF6B6B', '#00D4FF']
-    for (let i = 0; i < 150; i++) {
-      pieces.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height - canvas.height,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        r: Math.random() * 6 + 4,
-        d: Math.random() * 50 + 10,
-        tilt: Math.random() * 10 - 10,
-        tiltAngle: 0,
-        tiltSpeed: Math.random() * 0.1 + 0.05,
-      })
+  const handleStep1Submit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!userInfo.name || !userInfo.mobile || !userInfo.email || !userInfo.qualification || !userInfo.targetExam) {
+      showToast('Please fill all required fields and select a target exam.', 'error'); return
     }
-
-    let angle = 0
-    let frame = 0
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      angle += 0.01
-      pieces.forEach(p => {
-        p.tiltAngle += p.tiltSpeed
-        p.y += (Math.cos(angle + p.d) + 2) * 1.5
-        p.x += Math.sin(angle) * 1.5
-        p.tilt = Math.sin(p.tiltAngle) * 12
-        ctx.beginPath()
-        ctx.lineWidth = p.r
-        ctx.strokeStyle = p.color
-        ctx.moveTo(p.x + p.tilt + p.r / 3, p.y)
-        ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 5)
-        ctx.stroke()
-        if (p.y > canvas.height) {
-          p.y = -10
-          p.x = Math.random() * canvas.width
-        }
-      })
-      frame++
-      if (frame < 200) requestAnimationFrame(draw)
-      else canvas.style.display = 'none'
-    }
-    requestAnimationFrame(draw)
-  }
-
-  const startQuiz = () => {
-    if (!userInfo.name.trim() || !userInfo.email.trim() || !userInfo.phone.trim()) {
-      showToast('Please fill all fields')
-      return
+    if (!/^[6-9]\d{9}$/.test(userInfo.mobile)) {
+      showToast('Please enter a valid 10-digit mobile number.', 'error'); return
     }
     const qs = buildQuestionSet(userInfo.targetExam) as Question[]
-    setQuestions(qs)
-    setAnswers(Array(qs.length).fill({ selected: null, timeSpent: 0 }))
-    setCurrentQ(0)
-    setSelectedOpt(null)
-    setTimeLeft(TOTAL_TIME)
-    startTimeRef.current = Date.now()
-    setStep(2)
+    const initAns = new Array(qs.length).fill(null)
+    setQuestions(qs); setAnswers(initAns); setCurrentQ(0); setStep(2)
+    goToQuestion(0, qs, initAns)
   }
 
-  const handleAnswer = (optIdx: number) => {
-    if (selectedOpt !== null) return
-    setSelectedOpt(optIdx)
-    const timeSpent = TOTAL_TIME - timeLeft
-    setAnswers(prev => {
-      const updated = [...prev]
-      updated[currentQ] = { selected: optIdx, timeSpent }
-      setTimeout(() => moveToNext(updated), 800)
-      return updated
-    })
+  const handleNext = () => {
     stopTimer()
+    if (currentQ < questions.length - 1) {
+      const next = currentQ + 1; setCurrentQ(next); goToQuestion(next)
+    } else doSubmit(questions, answers)
   }
 
-  const pct = results ? Math.max(0, Math.round((results.score / results.maxScore) * 100)) : 0
+  const handleSkip = () => {
+    stopTimer()
+    const newAns = [...answers]; newAns[currentQ] = null; setAnswers(newAns)
+    if (currentQ < questions.length - 1) {
+      const next = currentQ + 1; setCurrentQ(next); goToQuestion(next, questions, newAns)
+    } else doSubmit(questions, newAns)
+  }
+
+  const retake = () => {
+    stopTimer(); setStep(1)
+    setUserInfo({ name: '', mobile: '', email: '', city: '', qualification: '', targetExam: '', challenge: '' })
+    setQuestions([]); setCurrentQ(0); setAnswers(new Array(15).fill(null))
+    setNegativeMarking(false); setTimeLeft(TOTAL_TIME); setResults(null)
+  }
+
+  const circumference = 283
+  const timerProgress = circumference * (1 - timeLeft / TOTAL_TIME)
+  const timerColor = timeLeft <= 5 ? '#ff4757' : '#1FA64A'
+  const resultCircumference = 2 * Math.PI * 54
+  const resultProgress = results ? resultCircumference * (results.pct / 100) : 0
+  const q = questions[currentQ]
+  const progressWidth = questions.length > 0 ? (currentQ / questions.length) * 100 : 0
+  const weakSubjects = results ? Object.entries(results.subjectScores).filter(([, d]) => d.pct < 60).sort((a, b) => a[1].pct - b[1].pct) : []
+  const strongSubjects = results ? Object.entries(results.subjectScores).filter(([, d]) => d.pct >= 60) : []
 
   return (
-    <section className="assessment section" id="assessment">
-      <canvas ref={confettiRef} id="confetti-canvas" style={{ position: 'fixed', top: 0, left: 0, zIndex: 9999, display: 'none', pointerEvents: 'none' }} />
+    <section className="assessment" id="assessment">
+      <canvas id="confettiCanvas" className="confetti-canvas" ref={confettiRef} />
+      <div className="assess-glow g1"></div>
+      <div className="assess-glow g2"></div>
 
       <div className="container">
-        <div className="section-header">
-          <div className="section-tag">Know Yourself</div>
-          <h2 className="section-title split-text">Free <span className="gradient-text">Aptitude Assessment</span></h2>
-          <p className="section-sub">15 questions · 30 sec each · Instant personalised study plan</p>
+        <div className="assess-section-header">
+          <div className="section-tag" style={{ margin: '0 auto 1rem' }}>Free Assessment</div>
+          <h2 className="section-title">Exam Readiness Assessment</h2>
+          <p className="section-sub">Take our 15-question personalised aptitude test. Get your score, subject-wise breakdown, and a custom study plan — instantly.</p>
+          <div className="assess-pills">
+            {[['fa-tasks','15 Questions'],['fa-clock','~15 Minutes'],['fa-bolt','Instant Results'],['fa-gift','100% Free']].map(([icon,label]) => (
+              <div key={label} className="ap-pill"><i className={`fas ${icon}`}></i> {label}</div>
+            ))}
+          </div>
         </div>
 
-        {/* Step 1 — User Info */}
-        {step === 1 && (
-          <div className="assessment-wrap">
-            <div className="assessment-intro glass-card">
-              <div className="assessment-intro-grid">
-                <div className="assessment-info-side">
-                  <h3>What You'll Get</h3>
-                  <ul className="assessment-benefits">
-                    {['15 questions across Quant, Reasoning, English & your target exam', 'Personalised score & subject-wise breakdown', 'Customised study plan based on your performance', 'Expert counsellor callback within 24 hours'].map(b => (
-                      <li key={b}><i className="fas fa-check-circle"></i> {b}</li>
-                    ))}
-                  </ul>
-                  <div className="assessment-stats-row">
-                    {[['50K+', 'Tests Taken'], ['92%', 'Accuracy'], ['4.9★', 'Rating']].map(([v, l]) => (
-                      <div key={l} className="assessment-stat"><span className="stat-num">{v}</span><span className="stat-label">{l}</span></div>
-                    ))}
-                  </div>
-                </div>
-                <div className="assessment-form-side">
-                  <h3>Enter Your Details</h3>
-                  <form onSubmit={e => { e.preventDefault(); startQuiz() }} className="assessment-form">
-                    <div className="form-group">
-                      <label>Full Name <span>*</span></label>
-                      <input type="text" className="form-control" placeholder="Your Name" value={userInfo.name}
-                        onChange={e => setUserInfo(p => ({ ...p, name: e.target.value }))} required />
-                    </div>
-                    <div className="form-group">
-                      <label>Email Address <span>*</span></label>
-                      <input type="email" className="form-control" placeholder="your@email.com" value={userInfo.email}
-                        onChange={e => setUserInfo(p => ({ ...p, email: e.target.value }))} required />
-                    </div>
-                    <div className="form-group">
-                      <label>Phone Number <span>*</span></label>
-                      <input type="tel" className="form-control" placeholder="+91 9876543210" value={userInfo.phone}
-                        onChange={e => setUserInfo(p => ({ ...p, phone: e.target.value }))} required />
-                    </div>
-                    <div className="form-group">
-                      <label>Target Exam</label>
-                      <select className="form-control" value={userInfo.targetExam}
-                        onChange={e => setUserInfo(p => ({ ...p, targetExam: e.target.value }))}>
-                        {EXAMS.map(ex => <option key={ex} value={ex}>{ex}</option>)}
-                      </select>
-                    </div>
-                    <div className="assessment-toggle-row">
-                      <label className="toggle-label">
-                        <span>Negative Marking (-0.5)</span>
-                        <div className={`toggle-switch${negativeMarking ? ' active' : ''}`} onClick={() => setNegativeMarking(p => !p)}>
-                          <div className="toggle-thumb"></div>
-                        </div>
-                      </label>
-                    </div>
-                    <button type="submit" className="btn-primary btn-full magnetic">
-                      <i className="fas fa-play-circle"></i> Start Free Test
-                    </button>
-                  </form>
-                </div>
+        <div className="assess-card" id="assessCard">
+          {/* Step Progress Bar */}
+          <div className="assess-top-bar">
+            <div className="assess-progress-track">
+              <div className="assess-progress-fill" style={{ width: `${((step - 1) / 2) * 100}%` }}></div>
+            </div>
+            <div className="step-indicators">
+              <div className={`si${step === 1 ? ' active' : ''}${step > 1 ? ' done' : ''}`}>
+                <div className="si-num"><i className="fas fa-user"></i></div><span>Your Info</span>
+              </div>
+              <div className="si-line"></div>
+              <div className={`si${step === 2 ? ' active' : ''}${step > 2 ? ' done' : ''}`}>
+                <div className="si-num"><i className="fas fa-pencil-alt"></i></div><span>Quiz</span>
+              </div>
+              <div className="si-line"></div>
+              <div className={`si${step === 3 ? ' active' : ''}`}>
+                <div className="si-num"><i className="fas fa-chart-bar"></i></div><span>Results</span>
               </div>
             </div>
           </div>
-        )}
 
-        {/* Step 2 — Quiz */}
-        {step === 2 && questions.length > 0 && (
-          <div className="quiz-wrap">
-            <div className="quiz-header glass-card">
-              <div className="quiz-progress-info">
-                <span className="quiz-q-count">Question {currentQ + 1} / {questions.length}</span>
-                <span className="quiz-subject-tag">{SUBJECT_LABELS[questions[currentQ].subject] || questions[currentQ].subject}</span>
-              </div>
-              <div className={`quiz-timer${timeLeft <= 10 ? ' danger' : ''}`}>
-                <div className="timer-circle">
-                  <svg viewBox="0 0 36 36">
-                    <path className="timer-bg" d="M18 2 a16 16 0 0 1 0 32 a16 16 0 0 1 0-32" />
-                    <path className="timer-fill" strokeDasharray={`${(timeLeft / TOTAL_TIME) * 100}, 100`} d="M18 2 a16 16 0 0 1 0 32 a16 16 0 0 1 0-32" />
-                  </svg>
-                  <span>{timeLeft}</span>
-                </div>
-              </div>
-              <div className="quiz-progress-bar">
-                <div className="quiz-progress-fill" style={{ width: `${((currentQ) / questions.length) * 100}%` }}></div>
-              </div>
+          {/* STEP 1 */}
+          <div className={`assess-panel${step !== 1 ? ' hidden' : ''}`}>
+            <div className="step-intro">
+              <h3>Tell Us About Yourself</h3>
+              <p>This helps us personalise your question set and study plan.</p>
             </div>
-
-            <div className="quiz-card glass-card">
-              <p className="quiz-question">{questions[currentQ].q}</p>
-              <div className="quiz-options">
-                {questions[currentQ].opts.map((opt, i) => {
-                  let cls = 'quiz-option'
-                  if (selectedOpt !== null) {
-                    if (i === questions[currentQ].ans) cls += ' correct'
-                    else if (i === selectedOpt) cls += ' wrong'
-                  }
-                  return (
-                    <button key={i} className={cls} onClick={() => handleAnswer(i)} disabled={selectedOpt !== null}>
-                      <span className="opt-letter">{String.fromCharCode(65 + i)}</span>
-                      <span className="opt-text">{opt}</span>
-                      {selectedOpt !== null && i === questions[currentQ].ans && <i className="fas fa-check opt-icon"></i>}
-                      {selectedOpt !== null && i === selectedOpt && i !== questions[currentQ].ans && <i className="fas fa-times opt-icon"></i>}
-                    </button>
-                  )
-                })}
-              </div>
-              {selectedOpt !== null && (
-                <div className="quiz-explanation">
-                  <i className="fas fa-lightbulb"></i>
-                  <span><strong>Explanation:</strong> {questions[currentQ].exp}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="quiz-dots">
-              {questions.map((_, i) => (
-                <span key={i} className={`quiz-dot${i === currentQ ? ' active' : i < currentQ ? (answers[i]?.selected === questions[i].ans ? ' correct' : ' wrong') : ''}`}></span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Step 3 — Results */}
-        {step === 3 && results && (
-          <div className="results-wrap">
-            <div className="results-hero glass-card">
-              <div className="results-score-circle">
-                <svg viewBox="0 0 120 120" className="score-svg">
-                  <circle cx="60" cy="60" r="54" className="score-bg-circle" />
-                  <circle cx="60" cy="60" r="54" className="score-fill-circle"
-                    strokeDasharray={`${pct * 3.39} 339`} />
-                </svg>
-                <div className="score-text">
-                  <span className="score-pct">{pct}%</span>
-                  <span className="score-label">{results.score.toFixed(1)} / {results.maxScore}</span>
-                </div>
-              </div>
-              <div className="results-summary">
-                <h3 className={`results-title ${pct >= 80 ? 'excellent' : pct >= 60 ? 'good' : 'improve'}`}>
-                  {pct >= 80 ? '🎉 Excellent Performance!' : pct >= 60 ? '👍 Good Job!' : '📚 Keep Practising!'}
-                </h3>
-                <p className="results-name">Well done, {userInfo.name}!</p>
-                <div className="results-quick-stats">
-                  <div className="rstat green"><i className="fas fa-check"></i> {questions.filter((q, i) => answers[i]?.selected === q.ans).length} Correct</div>
-                  <div className="rstat red"><i className="fas fa-times"></i> {questions.filter((q, i) => answers[i]?.selected !== null && answers[i]?.selected !== q.ans).length} Wrong</div>
-                  <div className="rstat blue"><i className="fas fa-minus"></i> {questions.filter((_, i) => answers[i]?.selected === null).length} Skipped</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="results-details">
-              <div className="subject-breakdown glass-card">
-                <h4><i className="fas fa-chart-bar"></i> Subject-Wise Breakdown</h4>
-                {Object.entries(results.subjectResults).map(([sub, data]) => (
-                  <div key={sub} className="subject-row">
-                    <span className="sub-label">{SUBJECT_LABELS[sub] || sub}</span>
-                    <div className="sub-bar-wrap">
-                      <div className="sub-bar" style={{ width: `${data.total ? (data.correct / data.total) * 100 : 0}%` }}></div>
-                    </div>
-                    <span className="sub-score">{data.correct}/{data.total}</span>
+            <form className="assess-info-form" noValidate onSubmit={handleStep1Submit}>
+              <div className="aif-grid">
+                {[
+                  { label: 'Full Name', key: 'name', type: 'text', placeholder: 'e.g. Rahul Sharma', req: true },
+                  { label: 'Mobile Number', key: 'mobile', type: 'tel', placeholder: '10-digit mobile', req: true },
+                  { label: 'Email Address', key: 'email', type: 'email', placeholder: 'your@email.com', req: true },
+                  { label: 'City', key: 'city', type: 'text', placeholder: 'e.g. Pune', req: false },
+                ].map(f => (
+                  <div key={f.key} className="aif-field">
+                    <label>{f.label}{f.req && <span className="req"> *</span>}</label>
+                    <input type={f.type} placeholder={f.placeholder} required={f.req}
+                      value={userInfo[f.key as keyof UserInfo]}
+                      onChange={e => setUserInfo(p => ({ ...p, [f.key]: e.target.value }))} />
                   </div>
                 ))}
+                <div className="aif-field">
+                  <label>Current Qualification<span className="req"> *</span></label>
+                  <select required value={userInfo.qualification} onChange={e => setUserInfo(p => ({ ...p, qualification: e.target.value }))}>
+                    <option value="">— Select —</option>
+                    {['10th Pass','12th Pass','Graduate (Pursuing)','Graduate (Completed)','Post Graduate','Dropout / Working Professional'].map(o => <option key={o}>{o}</option>)}
+                  </select>
+                </div>
+                <div className="aif-field">
+                  <label>Biggest Challenge</label>
+                  <select value={userInfo.challenge} onChange={e => setUserInfo(p => ({ ...p, challenge: e.target.value }))}>
+                    <option value="">— Select —</option>
+                    {['Weak in Maths / Quant','English Grammar Errors','Slow Speed in Reasoning','Lack of Study Plan','Poor GK / Current Affairs','Exam Fear / Anxiety','Time Management'].map(o => <option key={o}>{o}</option>)}
+                  </select>
+                </div>
               </div>
 
-              <div className="study-plan glass-card">
-                <h4><i className="fas fa-road"></i> Your Study Plan</h4>
-                <ul className="study-plan-list">
-                  {results.studyPlan.map((item, i) => (
-                    <li key={i}><i className="fas fa-arrow-right"></i> {item}</li>
+              <div className="exam-choice-section">
+                <label className="exam-choice-label">Target Exam<span className="req"> *</span></label>
+                <div className="exam-choice-grid">
+                  {[
+                    { exam: 'Banking', icon: 'fa-university' }, { exam: 'SSC', icon: 'fa-flag' },
+                    { exam: 'Defence', icon: 'fa-shield-alt' }, { exam: 'MBA', icon: 'fa-briefcase' },
+                    { exam: 'Law', icon: 'fa-gavel' }, { exam: 'MCA', icon: 'fa-laptop-code' },
+                    { exam: 'CUET', icon: 'fa-graduation-cap' }, { exam: 'IT', icon: 'fa-microchip' },
+                  ].map(({ exam, icon }) => (
+                    <button key={exam} type="button" className={`exam-choice-btn${userInfo.targetExam === exam ? ' selected' : ''}`}
+                      onClick={() => setUserInfo(p => ({ ...p, targetExam: exam }))}>
+                      <i className={`fas ${icon}`}></i><span>{exam}</span>
+                    </button>
                   ))}
-                </ul>
-                <div className="results-cta-group">
-                  <a href="#counselling" className="btn-primary magnetic">
-                    <i className="fas fa-phone"></i> Book Free Counselling
-                  </a>
-                  <button className="btn-outline magnetic" onClick={() => { setStep(1); setResults(null); setCurrentQ(0); setAnswers([]); setSelectedOpt(null) }}>
+                </div>
+              </div>
+
+              <button type="submit" className="btn-primary assess-start-btn">
+                Start My Assessment <i className="fas fa-arrow-right"></i>
+              </button>
+            </form>
+          </div>
+
+          {/* STEP 2 */}
+          <div className={`assess-panel${step !== 2 ? ' hidden' : ''}`}>
+            <div className="quiz-top-bar">
+              <div className="quiz-q-counter">
+                Question <span>{currentQ + 1}</span> / <span>{questions.length || 15}</span>
+              </div>
+              <div className="quiz-neg-wrap">
+                <label className="toggle-sw">
+                  <input type="checkbox" checked={negativeMarking} onChange={e => setNegativeMarking(e.target.checked)} />
+                  <span className="toggle-track"><span className="toggle-thumb"></span></span>
+                </label>
+                <span className="neg-label">{negativeMarking ? 'Negative Marking ON' : 'Negative Marking OFF'}</span>
+              </div>
+              <div className="quiz-timer-wrap">
+                <svg className="timer-svg" viewBox="0 0 100 100">
+                  <circle className="timer-bg-circle" cx="50" cy="50" r="45" fill="none" strokeWidth="6" />
+                  <circle className="timer-ring" cx="50" cy="50" r="45" fill="none" strokeWidth="6"
+                    strokeDasharray="283" strokeDashoffset={String(timerProgress)}
+                    strokeLinecap="round" transform="rotate(-90 50 50)" style={{ stroke: timerColor }} />
+                </svg>
+                <div className="timer-num" style={{ color: timeLeft <= 5 ? '#ff4757' : '' }}>{Math.ceil(timeLeft)}</div>
+              </div>
+            </div>
+
+            <div className="quiz-progress-bar">
+              <div className="quiz-progress-fill" style={{ width: `${progressWidth}%` }}></div>
+            </div>
+
+            <div className="quiz-subject-tag">{q ? (SUBJECT_LABELS[q.subject] || q.subject) : ''}</div>
+            <div className="quiz-question">{q ? q.q : 'Loading...'}</div>
+
+            <div className="quiz-options">
+              {q && q.opts.map((opt, i) => (
+                <button key={i} className={`quiz-opt-btn${answers[currentQ] === i ? ' selected' : ''}`}
+                  onClick={() => setAnswers(prev => { const n = [...prev]; n[currentQ] = i; return n })}>
+                  <span className="opt-letter">{String.fromCharCode(65 + i)}</span>
+                  <span className="opt-text">{opt}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="quiz-nav-row">
+              <button className="quiz-skip-btn" onClick={handleSkip}><i className="fas fa-forward"></i> Skip</button>
+              <button className="btn-primary quiz-next-btn" onClick={handleNext}>
+                {currentQ === (questions.length || 15) - 1 ? 'Submit' : 'Next'} <i className="fas fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+
+          {/* STEP 3 */}
+          <div className={`assess-panel${step !== 3 ? ' hidden' : ''}`}>
+            {results && (
+              <>
+                <div className="result-header">
+                  <span className="readiness-badge" style={{ background: results.readinessColor }}>{results.readiness}</span>
+                  <h3>Great job, {userInfo.name.split(' ')[0]}!</h3>
+                  <p className="result-exam-tag">{userInfo.targetExam} Preparation</p>
+                </div>
+
+                <div className="result-score-row">
+                  <div className="result-donut-wrap">
+                    <svg viewBox="0 0 120 120" className="result-donut">
+                      <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="10" />
+                      <circle cx="60" cy="60" r="54" fill="none" strokeWidth="10"
+                        strokeDasharray={String(resultCircumference)}
+                        strokeDashoffset={String(resultCircumference - resultProgress)}
+                        strokeLinecap="round" transform="rotate(-90 60 60)"
+                        style={{ stroke: results.readinessColor, transition: 'stroke-dashoffset 1.5s ease' }} />
+                    </svg>
+                    <div className="donut-center">
+                      <div className="donut-pct">{results.pct}%</div>
+                      <div className="donut-lbl">Score</div>
+                    </div>
+                  </div>
+                  <div className="result-stats-grid">
+                    <div className="rs-card green"><div className="rs-num">{results.correct}</div><div className="rs-lbl">Correct</div></div>
+                    <div className="rs-card red"><div className="rs-num">{results.wrong}</div><div className="rs-lbl">Wrong</div></div>
+                    <div className="rs-card grey"><div className="rs-num">{results.skipped}</div><div className="rs-lbl">Skipped</div></div>
+                    <div className="rs-card blue"><div className="rs-num">{results.score}/{results.maxScore}</div><div className="rs-lbl">Marks</div></div>
+                  </div>
+                </div>
+
+                <div className="result-section">
+                  <h4 className="rs-title"><i className="fas fa-chart-bar"></i> Subject-wise Performance</h4>
+                  <div className="subject-bars">
+                    {Object.entries(results.subjectScores).map(([key, data]) => {
+                      const color = data.pct >= 67 ? '#1FA64A' : data.pct >= 34 ? '#F7931E' : '#ff4757'
+                      return (
+                        <div key={key} className="subj-bar-item">
+                          <div className="sbi-top">
+                            <span className="sbi-name">{SUBJECT_LABELS[key] || key}</span>
+                            <span className="sbi-score" style={{ color }}>{data.score}/{data.max} ({data.pct}%)</span>
+                          </div>
+                          <div className="sbi-track">
+                            <div className="sbi-fill" style={{ background: color, width: `${data.pct}%`, transition: 'width 1s ease' }}></div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div className="result-section">
+                  <h4 className="rs-title"><i className="fas fa-map-marked-alt"></i> Your Personalised Study Plan</h4>
+                  <div className="study-plan-content">
+                    {weakSubjects.length === 0 ? (
+                      <div className="plan-row strong"><i className="fas fa-trophy"></i> Excellent! You&apos;re performing well in all subjects. Continue with mock tests and time management practice.</div>
+                    ) : (
+                      <>
+                        {weakSubjects.slice(0, 3).map(([key]) => {
+                          const tips = STUDY_PLANS[key] || ['Practice daily', 'Focus on basics', 'Solve previous papers']
+                          return (
+                            <div key={key} className="plan-subject">
+                              <div className="plan-subject-name">
+                                <i className="fas fa-exclamation-circle"></i> {SUBJECT_LABELS[key]}
+                                <span className="plan-weak-badge">Needs Focus</span>
+                              </div>
+                              <ul className="plan-tips">
+                                {tips.map((t, i) => <li key={i}><i className="fas fa-check-circle"></i> {t}</li>)}
+                              </ul>
+                            </div>
+                          )
+                        })}
+                        {strongSubjects.length > 0 && (
+                          <div className="plan-row strong">
+                            <i className="fas fa-star"></i> <strong>Strengths:</strong> {strongSubjects.map(([k]) => SUBJECT_LABELS[k]).join(', ')} — Keep it up!
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="result-section result-course-card">
+                  <div className="rcc-icon"><i className="fas fa-graduation-cap"></i></div>
+                  <div className="rcc-body">
+                    <div className="rcc-label">Recommended Course at ACS Academy</div>
+                    <div className="rcc-course">{COURSE_MAP[userInfo.targetExam] || userInfo.targetExam + ' Preparation'}</div>
+                  </div>
+                  <div className="rcc-badge">Best Fit</div>
+                </div>
+
+                <div className="result-ctas">
+                  <button className="btn-primary" onClick={() => document.getElementById('counselling')?.scrollIntoView({ behavior: 'smooth' })}>
+                    <i className="fas fa-phone-alt"></i> Book Free Counselling
+                  </button>
+                  <button className="btn-outline" onClick={retake}>
                     <i className="fas fa-redo"></i> Retake Test
                   </button>
                 </div>
-              </div>
-            </div>
+              </>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
-      {toast && (
-        <div className="toast-notification active">
-          <i className="fas fa-info-circle"></i> {toast}
-        </div>
-      )}
+      <div className={`assess-toast${toast.show ? ' show' : ''}${toast.type ? ' ' + toast.type : ''}`}>{toast.msg}</div>
     </section>
   )
 }

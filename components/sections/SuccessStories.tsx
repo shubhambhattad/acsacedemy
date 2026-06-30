@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import 'swiper/swiper-bundle.css'
 import testimonials from '@/data/testimonials'
 
 export default function SuccessStories() {
