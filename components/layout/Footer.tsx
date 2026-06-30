@@ -76,7 +76,7 @@ export default function Footer() {
       </div>
       <div className="footer-bottom">
         <div className="container">
-          <p>&copy; 2026 ACS Academy. All Rights Reserved. | Designed with ❤️ for Aspirants of Pune</p>
+          <p>&copy; 2026 ACS Academy. All Rights Reserved. | Designed &amp; Developed by <strong>Priyam IT Services Pvt Ltd</strong></p>
           <div className="footer-bottom-links">
             <a href="#">Privacy Policy</a>
             <a href="#">Terms of Use</a>
