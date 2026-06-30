@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://www.acsacademy.co.in/sitemap.xml
+
+# Disallow admin/private paths if added later
+Disallow: /admin/
+Disallow: /api/
+Disallow: /_sanity/
+
+# Crawl delay
+Crawl-delay: 5
