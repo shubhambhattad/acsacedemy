@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { Phone, Mail, MapPin, Send, ExternalLink } from 'lucide-react'
+import { Phone, Mail, MapPin, Send, ExternalLink, Youtube, Instagram, Facebook, MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export default function Footer() {
@@ -29,20 +29,23 @@ export default function Footer() {
             {/* Social Icons */}
             <div className="flex gap-3">
               {[
-                { label: 'YouTube', href: '#', icon: '▶' },
-                { label: 'Instagram', href: '#', icon: '✦' },
-                { label: 'Facebook', href: '#', icon: 'f' },
-                { label: 'WhatsApp', href: 'https://wa.me/918149895185', icon: '✆' },
-              ].map((social) => (
-                <a 
-                  key={social.label}
-                  href={social.href} 
-                  className="w-9 h-9 rounded-lg bg-white/8 hover:bg-acs-blue/50 flex items-center justify-center text-white/60 hover:text-white transition-all text-sm font-bold" 
-                  aria-label={social.label}
-                >
-                  {social.icon}
-                </a>
-              ))}
+                { label: 'YouTube', href: '#', icon: Youtube, hoverBg: 'hover:bg-[#FF0000]' },
+                { label: 'Instagram', href: '#', icon: Instagram, hoverBg: 'hover:bg-[#E1306C]' },
+                { label: 'Facebook', href: '#', icon: Facebook, hoverBg: 'hover:bg-[#1877F2]' },
+                { label: 'WhatsApp', href: 'https://wa.me/918149895185', icon: MessageCircle, hoverBg: 'hover:bg-[#25D366]' },
+              ].map((social) => {
+                const Icon = social.icon
+                return (
+                  <a 
+                    key={social.label}
+                    href={social.href} 
+                    className="w-9 h-9 rounded-lg bg-white/8 flex items-center justify-center text-white/60 hover:text-white transition-all" 
+                    aria-label={social.label}
+                  >
+                    <Icon className="size-4.5" />
+                  </a>
+                )
+              })}
             </div>
             {/* Google Rating */}
             <div className="flex items-center gap-2 text-xs font-semibold text-white/50 bg-white/5 p-2.5 rounded-lg w-fit border border-white/8">

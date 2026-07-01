@@ -79,16 +79,16 @@ export default function AboutPage() {
       <main className="min-h-screen bg-background">
         
         {/* Header Hero */}
-        <section className="bg-muted/30 border-b border-border/50 py-16 sm:py-20">
+        <section className="bg-gradient-to-r from-acs-blue/5 via-acs-green/5 to-acs-blue/5 border-b border-border/40 py-16 sm:py-20">
           <div className="container mx-auto px-4 sm:px-6">
-            <div className="max-w-3xl mx-auto text-center space-y-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-3 py-1 rounded-full">
+            <div className="max-w-3xl mx-auto text-center space-y-6">
+              <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-3.5 py-1.5 rounded-full border border-primary/10 mb-4 inline-block">
                 About Us
               </span>
-              <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-foreground">
-                Shaping Futures Since <span className="text-primary">2010</span>
+              <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-foreground">
+                Shaping Futures Since <span className="text-acs-blue-light">2010</span>
               </h1>
-              <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
+              <p className="text-muted-foreground text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
                 The story of ACS Academy is built on academic excellence, student-centric dedication, and a commitment to helping Pune&apos;s youth secure their dreams.
               </p>
             </div>
@@ -99,7 +99,7 @@ export default function AboutPage() {
         <section className="py-20">
           <div className="container mx-auto px-4 sm:px-6">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-              <div className="lg:col-span-6 relative rounded-2xl overflow-hidden shadow-lg border border-border/80 min-h-[300px]">
+              <div className="lg:col-span-6 relative rounded-2xl overflow-hidden shadow-md border border-border/40 min-h-[350px]">
                 <Image 
                   src="/images/acs-team-banner.jpeg" 
                   alt="ACS Academy Team" 
@@ -118,7 +118,7 @@ export default function AboutPage() {
                 </p>
                 
                 {/* About Features Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-border/50">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-border/40">
                   <div className="flex gap-3">
                     <CheckCircle2 className="size-5 text-primary shrink-0" />
                     <div>
@@ -154,7 +154,7 @@ export default function AboutPage() {
                     href="/contact" 
                     className={cn(
                       buttonVariants({ size: "lg" }), 
-                      "bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6 py-5 rounded-full flex items-center justify-center"
+                      "bg-primary hover:bg-primary/95 text-primary-foreground font-semibold px-6 py-5 rounded-full flex items-center justify-center shadow-sm shadow-primary/20"
                     )}
                   >
                     Book Free Counselling
@@ -166,13 +166,13 @@ export default function AboutPage() {
         </section>
 
         {/* Leadership Founders Section */}
-        <section className="py-20 bg-muted/20 border-y border-border/50">
+        <section className="py-20 bg-gradient-to-b from-acs-cream to-white border-y border-border/40">
           <div className="container mx-auto px-4 sm:px-6">
             <div className="max-w-3xl mx-auto text-center mb-16">
-              <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-3 py-1 rounded-full">
+              <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-3.5 py-1.5 rounded-full border border-primary/10">
                 Leadership
               </span>
-              <h2 className="text-3xl font-extrabold tracking-tight mt-4 mb-3">
+              <h2 className="text-3xl font-extrabold tracking-tight mt-5 mb-3">
                 The Visionaries Behind <span className="text-primary">ACS Academy</span>
               </h2>
               <p className="text-muted-foreground text-sm sm:text-base">
@@ -183,7 +183,7 @@ export default function AboutPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
               
               {/* Founder 1 */}
-              <Card className="border border-border/80 bg-card overflow-hidden rounded-2xl flex flex-col md:flex-row shadow-sm">
+              <Card className="border border-border/40 hover:border-primary/20 hover:shadow-md transition-all duration-300 bg-card overflow-hidden rounded-2xl flex flex-col md:flex-row shadow-sm">
                 <div className="md:w-2/5 min-h-[300px] relative shrink-0">
                   <Image 
                     src="/images/tanmay-shah.jpg" 
@@ -198,7 +198,7 @@ export default function AboutPage() {
                       Founder & CMD
                     </span>
                     <h3 className="text-xl font-bold text-foreground">Mr. Tanmay Shah</h3>
-                    <p className="text-[11px] text-muted-foreground font-semibold">
+                    <p className="text-[11px] text-muted-foreground font-semibold leading-relaxed">
                       MBA (Sales & Marketing) | Ex-Standard Chartered Bank | 25+ Years Experience
                     </p>
                     <p className="text-xs text-muted-foreground leading-relaxed pt-2">
@@ -215,7 +215,7 @@ export default function AboutPage() {
                   </div>
 
                   {/* Stats */}
-                  <div className="grid grid-cols-3 gap-2 border-t border-border/50 pt-4 text-center">
+                  <div className="grid grid-cols-3 gap-2 border-t border-border/40 pt-4 text-center">
                     <div>
                       <span className="block text-xs font-black text-primary">25+</span>
                       <span className="block text-[8px] uppercase font-bold text-muted-foreground">Yrs Exp</span>
@@ -233,7 +233,7 @@ export default function AboutPage() {
               </Card>
 
               {/* Founder 2 */}
-              <Card className="border border-border/80 bg-card overflow-hidden rounded-2xl flex flex-col md:flex-row shadow-sm">
+              <Card className="border border-border/40 hover:border-secondary/20 hover:shadow-md transition-all duration-300 bg-card overflow-hidden rounded-2xl flex flex-col md:flex-row shadow-sm">
                 <div className="md:w-2/5 min-h-[300px] relative shrink-0">
                   <Image 
                     src="/images/sushmita-shah.jpg" 
@@ -248,7 +248,7 @@ export default function AboutPage() {
                       Managing Director
                     </span>
                     <h3 className="text-xl font-bold text-foreground">Mrs. Sushmita Shah</h3>
-                    <p className="text-[11px] text-muted-foreground font-semibold">
+                    <p className="text-[11px] text-muted-foreground font-semibold leading-relaxed">
                       Commerce Graduate | Ex-Bharti Branch Head | 20+ Years Leadership
                     </p>
                     <p className="text-xs text-muted-foreground leading-relaxed pt-2">
@@ -265,7 +265,7 @@ export default function AboutPage() {
                   </div>
 
                   {/* Stats */}
-                  <div className="grid grid-cols-3 gap-2 border-t border-border/50 pt-4 text-center">
+                  <div className="grid grid-cols-3 gap-2 border-t border-border/40 pt-4 text-center">
                     <div>
                       <span className="block text-xs font-black text-secondary">20+</span>
                       <span className="block text-[8px] uppercase font-bold text-muted-foreground">Yrs Exp</span>
@@ -290,10 +290,10 @@ export default function AboutPage() {
         <section className="py-20">
           <div className="container mx-auto px-4 sm:px-6">
             <div className="max-w-3xl mx-auto text-center mb-16">
-              <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-3 py-1 rounded-full">
+              <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-3.5 py-1.5 rounded-full border border-primary/10">
                 Our Mentors
               </span>
-              <h2 className="text-3xl font-extrabold tracking-tight mt-4 mb-3">
+              <h2 className="text-3xl font-extrabold tracking-tight mt-5 mb-3">
                 Learn from <span className="text-primary">Expert Faculty</span>
               </h2>
               <p className="text-muted-foreground text-sm sm:text-base">
@@ -303,8 +303,8 @@ export default function AboutPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {faculty.map((f) => (
-                <Card key={f.id} className="border border-border/85 bg-card overflow-hidden hover:border-primary/30 transition-all duration-300 shadow-sm flex flex-col justify-between">
-                  <div className="relative h-64 w-full bg-muted border-b border-border/50 shrink-0">
+                <Card key={f.id} className="border border-border/40 bg-card overflow-hidden hover:border-primary/30 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col justify-between rounded-2xl">
+                  <div className="relative h-64 w-full bg-muted border-b border-border/40 shrink-0">
                     <Image 
                       src={f.image} 
                       alt={f.name} 
@@ -357,49 +357,82 @@ export default function AboutPage() {
         </section>
 
         {/* Milestone Timeline Section */}
-        <section className="py-20 bg-muted/20 border-t border-border/50">
+        <section className="py-20 bg-gradient-to-b from-acs-cream to-white border-t border-border/40">
           <div className="container mx-auto px-4 sm:px-6">
             <div className="max-w-3xl mx-auto text-center mb-16">
-              <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-3 py-1 rounded-full">
+              <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-3.5 py-1.5 rounded-full border border-primary/10">
                 Our Story
               </span>
-              <h2 className="text-3xl font-extrabold tracking-tight mt-4 mb-3">
-                16 Years of <span className="text-primary">Transforming Lives</span>
+              <h2 className="text-3xl font-extrabold tracking-tight mt-5 mb-3">
+                16 Years of <span className="text-acs-blue-light">Transforming Lives</span>
               </h2>
               <p className="text-muted-foreground text-sm sm:text-base">
                 From a humble Paud Road classroom to Pune&apos;s top-ranked educational coaching institute.
               </p>
             </div>
 
-            <div className="max-w-4xl mx-auto relative border-l-2 border-primary/20 pl-6 sm:pl-8 space-y-12 ml-4">
+            <div className="relative max-w-5xl mx-auto py-10 space-y-12">
+              {/* Center vertical line */}
+              <div className="absolute left-6 md:left-1/2 top-0 bottom-0 w-[3px] bg-gradient-to-b from-acs-blue/40 via-acs-green/40 to-acs-blue/40 -translate-x-1/2 z-0" />
+
               {timelineItems.map((item, idx) => {
                 const Icon = item.icon
+                const isLeft = idx % 2 === 0
+                
                 return (
-                  <div key={idx} className="relative group">
-                    {/* Timeline dot */}
-                    <div className="absolute -left-[35px] sm:-left-[43px] top-1.5 p-1 bg-background border-2 border-primary rounded-full text-primary shrink-0 transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                      <Icon className="size-4" />
+                  <div key={idx} className="relative flex flex-col md:flex-row items-start md:items-center justify-between md:even:flex-row-reverse group">
+                    {/* Card wrapper */}
+                    <div className={cn(
+                      "w-full md:w-[calc(50%-32px)] pl-12 md:pl-0",
+                      isLeft ? "md:text-right md:pr-0" : "md:text-left md:pl-0"
+                    )}>
+                      <Card className="border border-border/40 hover:border-primary/20 hover:shadow-md transition-all duration-300 bg-white p-5 rounded-2xl group-hover:-translate-y-1">
+                        <CardContent className="p-0 space-y-3">
+                          <div className={cn(
+                            "flex items-center gap-2",
+                            isLeft ? "md:flex-row-reverse" : ""
+                          )}>
+                            <span className="text-xs font-black text-primary bg-primary/10 px-3 py-1 rounded-full border border-primary/15">
+                              {item.year}
+                            </span>
+                            <span className="text-[10px] font-bold text-secondary uppercase tracking-wider bg-secondary/5 px-2.5 py-1 rounded-md">
+                              {item.milestone}
+                            </span>
+                          </div>
+                          
+                          <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors leading-snug">
+                            {item.title}
+                          </h3>
+                          
+                          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                            {item.desc}
+                          </p>
+                          
+                          <div className={cn(
+                            "flex flex-wrap gap-1.5 pt-1",
+                            isLeft ? "md:justify-end" : ""
+                          )}>
+                            {item.tags.map((tag) => (
+                              <span key={tag} className="bg-acs-cream border border-border/30 text-[9px] font-semibold text-muted-foreground px-2 py-0.5 rounded">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
                     </div>
-                    
-                    <div className="space-y-2">
-                      <span className="text-sm font-black text-primary bg-primary/5 px-2 py-0.5 rounded border border-primary/10">
-                        {item.year}
-                      </span>
-                      <h3 className="text-xl font-bold text-foreground">{item.title}</h3>
-                      <p className="text-xs font-bold text-secondary uppercase tracking-wide">
-                        {item.milestone}
-                      </p>
-                      <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
-                        {item.desc}
-                      </p>
-                      <div className="flex flex-wrap gap-1.5 pt-2">
-                        {item.tags.map((tag) => (
-                          <span key={tag} className="bg-muted text-[10px] font-semibold text-muted-foreground px-2 py-0.5 rounded border border-border/60">
-                            {tag}
-                          </span>
-                        ))}
+
+                    {/* Timeline Node/Dot */}
+                    <div className="absolute left-6 md:left-1/2 top-4 md:top-auto -translate-x-1/2 z-10 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-white border-2 border-primary text-primary flex items-center justify-center shadow-sm group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110 transition-all duration-300">
+                        <Icon className="size-4" />
                       </div>
+                      {/* Pulsing ring */}
+                      <div className="absolute w-8 h-8 rounded-full bg-primary/10 animate-ping -z-10 group-hover:bg-primary/20" />
                     </div>
+
+                    {/* Empty spacer for grid alignment */}
+                    <div className="hidden md:block w-[calc(50%-32px)]" />
                   </div>
                 )
               })}

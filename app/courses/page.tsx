@@ -23,24 +23,26 @@ export default function CoursesPage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-background py-12">
-        {/* Header */}
-        <div className="container mx-auto px-4 sm:px-6 mb-12">
-          <div className="max-w-3xl mx-auto text-center space-y-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-3 py-1 rounded-full">
-              Our Programs
-            </span>
-            <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-foreground">
-              Courses For Every <span className="text-primary">Aspirant</span>
-            </h1>
-            <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
-              Comprehensive coaching for all major competitive exams. Choose your stream, check details, and enroll to begin your journey.
-            </p>
+      <main className="min-h-screen bg-background">
+        {/* Header Hero */}
+        <section className="bg-gradient-to-r from-acs-blue/5 via-acs-green/5 to-acs-blue/5 border-b border-border/40 py-16">
+          <div className="container mx-auto px-4 sm:px-6 mb-4">
+            <div className="max-w-3xl mx-auto text-center space-y-6">
+              <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-3.5 py-1.5 rounded-full border border-primary/10 mb-4 inline-block">
+                Our Programs
+              </span>
+              <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-foreground">
+                Courses For Every <span className="text-acs-blue-light">Aspirant</span>
+              </h1>
+              <p className="text-muted-foreground text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
+                Comprehensive coaching for all major competitive exams. Choose your stream, check details, and enroll to begin your journey.
+              </p>
+            </div>
           </div>
-        </div>
+        </section>
 
         {/* Tabbed Course Selector */}
-        <div className="container mx-auto px-4 sm:px-6 mb-20">
+        <div className="container mx-auto px-4 sm:px-6 py-16 mb-8">
           <Tabs defaultValue="banking" className="w-full">
             <div className="flex justify-center mb-8">
               <TabsList className="flex flex-wrap justify-center h-auto p-1.5 bg-muted rounded-xl gap-1">
@@ -48,7 +50,7 @@ export default function CoursesPage() {
                   <TabsTrigger
                     key={cat.id}
                     value={cat.id}
-                    className="px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all"
+                    className="px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg data-active:bg-background data-active:text-primary data-active:shadow-sm transition-all cursor-pointer"
                   >
                     {cat.label}
                   </TabsTrigger>
@@ -62,7 +64,7 @@ export default function CoursesPage() {
                   {courses[catId].map((course, idx) => (
                     <Card 
                       key={idx} 
-                      className="border border-border/80 bg-card hover:border-primary/40 transition-all duration-300 shadow-sm flex flex-col justify-between"
+                      className="border border-border/40 bg-card hover:border-primary/20 hover:shadow-md transition-all duration-300 flex flex-col justify-between rounded-2xl"
                     >
                       <CardHeader className="pb-2">
                         <div className="flex justify-between items-start gap-2">
@@ -100,7 +102,7 @@ export default function CoursesPage() {
                           href="/contact"
                           className={cn(
                             buttonVariants({ size: "sm" }),
-                            "bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-lg text-xs"
+                            "bg-primary hover:bg-primary/95 text-primary-foreground font-bold rounded-lg text-xs"
                           )}
                         >
                           Enroll Now
@@ -115,13 +117,13 @@ export default function CoursesPage() {
         </div>
 
         {/* Batch Timings Section */}
-        <div className="bg-muted/30 border-y border-border/50 py-16">
+        <div className="bg-gradient-to-b from-acs-cream to-white border-y border-border/40 py-16">
           <div className="container mx-auto px-4 sm:px-6">
             <div className="max-w-3xl mx-auto text-center mb-12">
-              <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-3 py-1 rounded-full">
+              <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-3.5 py-1.5 rounded-full border border-primary/10">
                 Schedule
               </span>
-              <h2 className="text-3xl font-extrabold tracking-tight mt-4 mb-3">
+              <h2 className="text-3xl font-extrabold tracking-tight mt-5 mb-3">
                 Flexible <span className="text-primary">Batch Timings</span>
               </h2>
               <p className="text-muted-foreground text-sm sm:text-base">
@@ -135,9 +137,10 @@ export default function CoursesPage() {
                 return (
                   <Card 
                     key={idx} 
-                    className={`relative border transition-all hover:shadow-sm ${
-                      b.popular ? 'border-primary shadow-sm bg-card' : 'border-border/80 bg-card'
-                    }`}
+                    className={cn(
+                      "relative border transition-all hover:shadow-md duration-300 rounded-xl bg-white",
+                      b.popular ? 'border-primary/45 shadow-xs' : 'border-border/40'
+                    )}
                   >
                     {b.popular && (
                       <span className="absolute top-0 right-4 -translate-y-1/2 bg-primary text-primary-foreground text-[9px] uppercase font-black px-2 py-0.5 rounded-full border border-primary">
@@ -175,8 +178,8 @@ export default function CoursesPage() {
         </div>
 
         {/* CTA section */}
-        <div className="container mx-auto px-4 sm:px-6 pt-16">
-          <Card className="max-w-4xl mx-auto border border-primary/20 bg-gradient-to-r from-primary/5 to-secondary/5 p-8 sm:p-10 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div className="container mx-auto px-4 sm:px-6 py-16">
+          <Card className="max-w-4xl mx-auto border border-primary/20 bg-gradient-to-r from-primary/5 to-secondary/5 p-8 sm:p-10 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-6 shadow-md">
             <div className="space-y-2 text-center sm:text-left">
               <h3 className="text-xl font-bold text-foreground">Not sure which course is right for you?</h3>
               <p className="text-xs text-muted-foreground max-w-lg">
@@ -187,7 +190,7 @@ export default function CoursesPage() {
               href="/contact"
               className={cn(
                 buttonVariants({ size: "lg" }),
-                "bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full shrink-0 shadow-md flex items-center justify-center"
+                "bg-primary hover:bg-primary/95 text-primary-foreground font-semibold rounded-full shrink-0 shadow-sm flex items-center justify-center"
               )}
             >
               Talk to a Counsellor

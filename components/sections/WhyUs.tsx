@@ -44,7 +44,7 @@ export default function WhyUs() {
             return (
               <Card 
                 key={idx} 
-                className={`group relative border-l-4 ${c.accent} border border-border/60 hover:border-border transition-all duration-300 hover:shadow-md bg-white`}
+                className={`group relative border-l-4 ${c.accent} border border-border/40 hover:border-primary/20 hover:shadow-md transition-all duration-300 bg-white`}
               >
                 <CardHeader className="pb-2">
                   <div className="p-2.5 rounded-xl bg-acs-blue/5 group-hover:bg-acs-blue/10 text-acs-blue transition-colors w-fit">
