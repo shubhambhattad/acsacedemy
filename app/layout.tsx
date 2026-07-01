@@ -1,18 +1,12 @@
 import type { Metadata } from 'next'
-import { Poppins, Inter } from 'next/font/google'
-import Script from 'next/script'
+import { Onest } from 'next/font/google'
 import './globals.css'
+import { cn } from "@/lib/utils";
 
-const poppins = Poppins({
+const onest = Onest({
   subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700', '800'],
-  variable: '--font-poppins',
-  display: 'swap',
-})
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
+  variable: '--font-onest',
   display: 'swap',
 })
 
@@ -65,19 +59,13 @@ const jsonLd = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${poppins.variable} ${inter.variable}`}>
+    <html lang="en" className={cn(onest.variable)}>
       <head>
         <link rel="icon" href="/logo.jpeg" />
-        <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossOrigin="anonymous" />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       </head>
       <body>
         {children}
-        <Script
-          src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"
-          strategy="lazyOnload"
-        />
       </body>
     </html>
   )
